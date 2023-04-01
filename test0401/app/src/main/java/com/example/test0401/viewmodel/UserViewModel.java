@@ -121,6 +121,9 @@ public class UserViewModel extends AndroidViewModel {
     public void addDisposable(Disposable disposable) {
         compositeDisposable.add(disposable);
     }
+    public Single<List<User>> searchUsersByUsername(String searchString) {
+        return userRepository.searchUsersByUsername(searchString);
+    }
 
     @Override
     protected void onCleared() {

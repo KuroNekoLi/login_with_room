@@ -59,4 +59,9 @@ public class UserRepository {
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread());
     }
+    public Single<List<User>> searchUsersByUsername(String searchString) {
+        return userDao.searchUsersByUsername("%" + searchString + "%")
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
+    }
 }

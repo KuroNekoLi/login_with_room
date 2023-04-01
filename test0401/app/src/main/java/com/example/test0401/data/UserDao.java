@@ -27,4 +27,7 @@ public interface UserDao {
 
     @Query("SELECT * FROM users WHERE username = :username LIMIT 1")
     Single<User> getUserByUsername(String username);
+
+    @Query("SELECT * FROM users WHERE username LIKE :searchString")
+    Single<List<User>> searchUsersByUsername(String searchString);
 }

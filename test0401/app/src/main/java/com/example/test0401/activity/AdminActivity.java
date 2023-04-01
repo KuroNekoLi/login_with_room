@@ -1,6 +1,7 @@
 package com.example.test0401.activity;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
@@ -8,6 +9,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
@@ -50,69 +54,97 @@ public class AdminActivity extends AppCompatActivity {
 
         userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
 
-        userViewModel.getAllUsers().observe(this, new Observer<List<User>>() {
-            @Override
-            public void onChanged(List<User> users) {
-                userAdapter.setUsers(users);
-            }
+        userViewModel.getAllUsers().observe(this, userAdapter::setUsers);
+
+        btnSearchUser.setOnClickListener(v -> {
+            String username = etSearchUser.getText().toString();
+            userViewModel.searchUsersByUsername(username).subscribe(new SingleObserver<List<User>>() {
+                @Override
+                public void onSubscribe(@NonNull Disposable d) {
+                    userViewModel.addDisposable(d);
+                }
+
+                @Override
+                public void onSuccess(@NonNull List<User> users) {
+                    userAdapter.setUsers(users);
+                }
+
+                @Override
+                public void onError(@NonNull Throwable e) {
+                    Toast.makeText(AdminActivity.this, "Error searching users", Toast.LENGTH_SHORT).show();
+                }
+            });
         });
 
-        btnSearchUser.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String username = etSearchUser.getText().toString();
-                userViewModel.getUserByUsername(username).subscribe(new SingleObserver<User>() {
-                    @Override
-                    public void onSubscribe(@NonNull Disposable d) {
-                        // 添加订阅到CompositeDisposable，以便在ViewModel清理时正确取消订阅
-                        userViewModel.addDisposable(d);
-                    }
+        btnAddUser.setOnClickListener(v -> {
+            // 创建一个对话框来让用户输入用户名和密码
+            AlertDialog.Builder builder = new AlertDialog.Builder(AdminActivity.this);
+            LayoutInflater inflater = getLayoutInflater();
+            View dialogView = inflater.inflate(R.layout.dialog_add_user, null);
+            builder.setView(dialogView);
 
-                    @Override
-                    public void onSuccess(@NonNull User user) {
-                        // 显示查询到的用户信息，可以用一个Dialog展示
-                    }
+            EditText etUsername = dialogView.findViewById(R.id.etUsername);
+            EditText etPassword = dialogView.findViewById(R.id.etPassword);
 
-                    @Override
-                    public void onError(@NonNull Throwable e) {
-                        Toast.makeText(AdminActivity.this, "User not found", Toast.LENGTH_SHORT).show();
+            builder.setPositiveButton("Add User", (dialog, which) -> {
+                String username = etUsername.getText().toString();
+                String password = etPassword.getText().toString();
+                User user = new User(username, password);
+                userViewModel.insert(user).observe(AdminActivity.this, rowId -> {
+                    if (rowId != null && rowId > 0) {
+                        userAdapter.addUser(user);
                     }
                 });
-            }
+            });
+
+            builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+
+            AlertDialog alertDialog = builder.create();
+            alertDialog.show();
         });
 
-        btnAddUser.setOnClickListener(new View.OnClickListener() {
+        userAdapter.setOnItemClickListener(user -> {
+            userViewModel.delete(user).observe(AdminActivity.this, affectedRows -> {
+                if (affectedRows != null && affectedRows > 0) {
+                    int position = userAdapter.removeUser(user);
+                    userAdapter.notifyItemRemoved(position);
+                    Toast.makeText(AdminActivity.this, "User deleted", Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
+
+        etSearchUser.addTextChangedListener(new TextWatcher() {
             @Override
-            public void onClick(View v) {
-                String a = String.valueOf((int)(Math.random()*49+1));
-                String b = String.valueOf((int)(Math.random()*49+1));
-                User user = new User(a,b);
-                userViewModel.insert(user).observe(AdminActivity.this, new Observer<Long>() {
-                    @Override
-                    public void onChanged(Long rowId) {
-                        if (rowId != null && rowId > 0) {
-                            // 数据库插入成功
-                            userAdapter.addUser(user); // 在 UserAdapter 中添加 addUser 方法
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                String username = s.toString();
+                if (username.isEmpty()) {
+                    userViewModel.getAllUsers().observe(AdminActivity.this, userAdapter::setUsers);
+                } else {
+                    userViewModel.searchUsersByUsername(username).subscribe(new SingleObserver<List<User>>() {
+                        @Override
+                        public void onSubscribe(@NonNull Disposable d) {
+                            userViewModel.addDisposable(d);
                         }
-                    }
-                });
-            }
-        });
 
-        userAdapter.setOnItemClickListener(new UserAdapter.OnItemClickListener() {
-            @Override
-            public void onDeleteClick(User user) {
-                userViewModel.delete(user).observe(AdminActivity.this, new Observer<Integer>() {
-                    @Override
-                    public void onChanged(Integer affectedRows) {
-                        if (affectedRows != null && affectedRows > 0) {
-                            // 数据库删除成功
-                            int position = userAdapter.removeUser(user); // 在 UserAdapter 中添加 removeUser 方法
-                            userAdapter.notifyItemRemoved(position);
-                            Toast.makeText(AdminActivity.this, "User deleted", Toast.LENGTH_SHORT).show();
+                        @Override
+                        public void onSuccess(@NonNull List<User> users) {
+                            userAdapter.setUsers(users);
                         }
-                    }
-                });
+
+                        @Override
+                        public void onError(@NonNull Throwable e) {
+                            Toast.makeText(AdminActivity.this, "Error searching users", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
             }
         });
     }
