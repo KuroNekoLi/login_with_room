@@ -8,6 +8,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 
 
 import com.example.test0401.activity.MainActivity;
@@ -16,6 +17,7 @@ import com.example.test0401.repository.UserRepository;
 
 import java.util.List;
 
+import io.reactivex.rxjava3.core.CompletableObserver;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.disposables.Disposable;
@@ -32,12 +34,48 @@ public class UserViewModel extends AndroidViewModel {
         allUsers = userRepository.getAllUsers();
     }
 
-    public void insert(User user) {
-        userRepository.insert(user);
+    public LiveData<Long> insert(User user) {
+        MutableLiveData<Long> rowId = new MutableLiveData<>();
+        userRepository.insert(user)
+                .subscribe(new CompletableObserver() {
+                    @Override
+                    public void onSubscribe(@NonNull Disposable d) {
+                        compositeDisposable.add(d);
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        rowId.postValue(1L); // 数据库插入成功，通知观察者
+                    }
+
+                    @Override
+                    public void onError(@NonNull Throwable e) {
+                        rowId.postValue(-1L); // 数据库插入失败，通知观察者
+                    }
+                });
+        return rowId;
     }
 
-    public void delete(User user) {
-        userRepository.delete(user);
+    public LiveData<Integer> delete(User user) {
+        MutableLiveData<Integer> affectedRows = new MutableLiveData<>();
+        userRepository.delete(user)
+                .subscribe(new CompletableObserver() {
+                    @Override
+                    public void onSubscribe(@NonNull Disposable d) {
+                        compositeDisposable.add(d);
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        affectedRows.postValue(1); // 数据库删除成功，通知观察者
+                    }
+
+                    @Override
+                    public void onError(@NonNull Throwable e) {
+                        affectedRows.postValue(-1); // 数据库删除失败，通知观察者
+                    }
+                });
+        return affectedRows;
     }
 
     public LiveData<List<User>> getAllUsers() {

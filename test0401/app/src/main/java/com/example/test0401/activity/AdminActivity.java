@@ -20,6 +20,7 @@ import com.example.test0401.data.User;
 import com.example.test0401.viewmodel.UserViewModel;
 
 import java.util.List;
+import java.util.Random;
 
 import io.reactivex.rxjava3.core.SingleObserver;
 import io.reactivex.rxjava3.disposables.Disposable;
@@ -83,15 +84,35 @@ public class AdminActivity extends AppCompatActivity {
         btnAddUser.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // 打开一个添加用户的Dialog，获取新用户的用户名和密码，然后调用 userViewModel.insert(newUser) 方法添加用户
+                String a = String.valueOf((int)(Math.random()*49+1));
+                String b = String.valueOf((int)(Math.random()*49+1));
+                User user = new User(a,b);
+                userViewModel.insert(user).observe(AdminActivity.this, new Observer<Long>() {
+                    @Override
+                    public void onChanged(Long rowId) {
+                        if (rowId != null && rowId > 0) {
+                            // 数据库插入成功
+                            userAdapter.addUser(user); // 在 UserAdapter 中添加 addUser 方法
+                        }
+                    }
+                });
             }
         });
 
         userAdapter.setOnItemClickListener(new UserAdapter.OnItemClickListener() {
             @Override
             public void onDeleteClick(User user) {
-                userViewModel.delete(user);
-                Toast.makeText(AdminActivity.this, "User deleted", Toast.LENGTH_SHORT).show();
+                userViewModel.delete(user).observe(AdminActivity.this, new Observer<Integer>() {
+                    @Override
+                    public void onChanged(Integer affectedRows) {
+                        if (affectedRows != null && affectedRows > 0) {
+                            // 数据库删除成功
+                            int position = userAdapter.removeUser(user); // 在 UserAdapter 中添加 removeUser 方法
+                            userAdapter.notifyItemRemoved(position);
+                            Toast.makeText(AdminActivity.this, "User deleted", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
             }
         });
     }

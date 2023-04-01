@@ -74,8 +74,19 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
         this.users = users;
         notifyDataSetChanged();
     }
-}
 
-interface OnItemClickListener {
-    void onDeleteClick(User user);
+    // 添加用户到 UserAdapter 的数据集中
+    public void addUser(User user) {
+        users.add(user);
+        notifyDataSetChanged();
+    }
+
+    // 从 UserAdapter 的数据集中移除用户
+    public int removeUser(User user) {
+        int position = users.indexOf(user);
+        if (position != -1) {
+            users.remove(position);
+        }
+        return position;
+    }
 }

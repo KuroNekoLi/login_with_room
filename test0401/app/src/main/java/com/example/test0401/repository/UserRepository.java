@@ -12,6 +12,8 @@ import com.example.test0401.data.UserDao;
 import java.util.List;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.annotations.NonNull;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
@@ -30,18 +32,16 @@ public class UserRepository {
                         .toFlowable());
     }
 
-    public void insert(User user) {
-        userDao.insert(user)
+    public Completable insert(User user) {
+        return userDao.insert(user)
                 .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe();
+                .observeOn(AndroidSchedulers.mainThread());
     }
 
-    public void delete(User user) {
-        userDao.delete(user)
+    public Completable delete(User user) {
+        return userDao.delete(user)
                 .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe();
+                .observeOn(AndroidSchedulers.mainThread());
     }
 
     public LiveData<List<User>> getAllUsers() {
