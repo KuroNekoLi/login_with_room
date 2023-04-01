@@ -47,6 +47,9 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 
+    implementation 'com.google.firebase:firebase-auth:21.0.1' // 如果您要使用 Firebase Authentication
+    implementation 'com.firebaseui:firebase-ui-auth:7.2.0'
+
     constraints {
         implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0") {
             because("kotlin-stdlib-jdk7 is now a part of kotlin-stdlib")
@@ -56,3 +59,5 @@ dependencies {
         }
     }
 }
+// 添加以下行
+apply plugin: 'com.google.gms.google-services'

@@ -38,6 +38,7 @@ public class LoginActivity extends AppCompatActivity {
                 String username = etUsername.getText().toString();
                 String password = etPassword.getText().toString();
                 userViewModel.login(username, password, LoginActivity.this);
+                userViewModel.login( username,password,LoginActivity.this );
             }
         });
 

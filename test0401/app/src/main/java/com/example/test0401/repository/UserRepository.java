@@ -8,10 +8,15 @@ import androidx.lifecycle.LiveDataReactiveStreams;
 import com.example.test0401.data.AppDatabase;
 import com.example.test0401.data.User;
 import com.example.test0401.data.UserDao;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.List;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.annotations.NonNull;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
@@ -19,6 +24,7 @@ public class UserRepository {
 
     private UserDao userDao;
     private LiveData<List<User>> allUsers;
+    private FirebaseAuth mAuth;
 
     public UserRepository(Application application) {
         AppDatabase database = AppDatabase.getInstance(application);
@@ -28,20 +34,19 @@ public class UserRepository {
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .toFlowable());
+        mAuth = FirebaseAuth.getInstance();
     }
 
-    public void insert(User user) {
-        userDao.insert(user)
+    public Completable insert(User user) {
+        return userDao.insert(user)
                 .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe();
+                .observeOn(AndroidSchedulers.mainThread());
     }
 
-    public void delete(User user) {
-        userDao.delete(user)
+    public Completable delete(User user) {
+        return userDao.delete(user)
                 .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe();
+                .observeOn(AndroidSchedulers.mainThread());
     }
 
     public LiveData<List<User>> getAllUsers() {
@@ -58,5 +63,13 @@ public class UserRepository {
         return userDao.getUserByUsername(username)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread());
+    }
+
+    public Task<AuthResult> registerUser(String email, String password) {
+        return mAuth.createUserWithEmailAndPassword(email, password);
+    }
+
+    public Task<AuthResult> loginUser( String email, String password) {
+        return mAuth.signInWithEmailAndPassword(email, password);
     }
 }
